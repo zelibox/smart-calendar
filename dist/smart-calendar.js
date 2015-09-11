@@ -3,54 +3,58 @@ angular.module('smartCalendar', [])
         function SmartCalendarHandler(options) {
             var config = angular.merge({
                 localization: {
+                    words: {
+                        month: 'Месяц',
+                        day: 'День'
+                    },
                     months: [
                         {
                             name: 'Январь',
-                            shortName: 'Янв'
+                            shortName: 'янв'
                         },
                         {
                             name: 'Февраль',
-                            shortName: 'Фев'
+                            shortName: 'фев'
                         },
                         {
                             name: 'Март',
-                            shortName: 'Мар'
+                            shortName: 'мар'
                         },
                         {
                             name: 'Апрель',
-                            shortName: 'Апр'
+                            shortName: 'апр'
                         },
                         {
                             name: 'Май',
-                            shortName: 'Май'
+                            shortName: 'май'
                         },
                         {
                             name: 'Июнь',
-                            shortName: 'Июн'
+                            shortName: 'июн'
                         },
                         {
                             name: 'Июль',
-                            shortName: 'Июл'
+                            shortName: 'июл'
                         },
                         {
                             name: 'Август',
-                            shortName: 'Авг'
+                            shortName: 'авг'
                         },
                         {
                             name: 'Сентябрь',
-                            shortName: 'Сен'
+                            shortName: 'сен'
                         },
                         {
                             name: 'Октябрь',
-                            shortName: 'Окт'
+                            shortName: 'окт'
                         },
                         {
                             name: 'Ноябрь',
-                            shortName: 'Ноя'
+                            shortName: 'ноя'
                         },
                         {
                             name: 'Декабрь',
-                            shortName: 'Дек'
+                            shortName: 'дек'
                         }
                     ],
                     days: ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс']
@@ -84,34 +88,29 @@ angular.module('smartCalendar', [])
                         days.push({
                             number: prevDate.getDate(),
                             currentMonth: false,
-                            active: false,
-                            dayMonth: prevDate.getMonth(),
-                            dayYear: prevDate.getFullYear()
+                            isToday: false,
+                            date: prevDate
                         })
                     }
                     for (i = 1; i <= countDays; i++) {
                         days.push({
                             number: i,
                             currentMonth: true,
-                            active: false,
-                            dayMonth: this.month,
-                            dayYear: this.year,
                             isToday: (function () {
                                 var date = self.createDate();
                                 return ((date.getFullYear() == year) && (date.getMonth() == month) && (date.getDate() == i))
-                            })()
+                            })(),
+                            date: self.createDate(this.year, this.month, i)
                         });
                     }
                     var endWeekday = self.createDate(this.year, this.month, countDays).getDay();
                     var countNextDays = ((7 - endWeekday) < 7) ? (7 - endWeekday) : 0;
                     for (i = 0; i < countNextDays; i++) {
-                        var nextDate = self.createDate(this.year, (this.month + 1), 1);
                         days.push({
                             number: i + 1,
                             currentMonth: false,
-                            active: false,
-                            dayMonth: nextDate.getMonth(),
-                            dayYear: nextDate.getFullYear()
+                            isToday: false,
+                            date: self.createDate(this.year, (this.month + 1), i + 1)
                         })
                     }
                     this.days = days;
@@ -129,12 +128,21 @@ angular.module('smartCalendar', [])
                 return activeDate;
             };
 
-            this.getMonthName = function(date) {
+            this.getMonthName = function (date) {
                 return config.localization.months[date.getMonth()].name;
             };
 
-            this.getWeekdays = function () {
-                return config.localization.days
+            this.getMonthShortName = function (date) {
+                return config.localization.months[date.getMonth()].shortName;
+            };
+
+            this.getWeekdayName = function(date) {
+                var weekday = ((date.getDay() < 1) ? 6 : date.getDay() - 1);
+                return config.localization.days[weekday];
+            };
+
+            this.getLocalization = function () {
+                return config.localization
             }
         }
 
@@ -150,22 +158,110 @@ angular.module('smartCalendar', [])
             },
             template: '\
             <div class="smart-calendar">\
-                <h4>{{ handler.getMonthName(handler.createDate(handler.calendarMonth.year, handler.calendarMonth.month)) }} {{ handler.calendarMonth.year }}</h4>\
-                <div class="smart-calendar-weekdays">\
-                    <div class="smart-calendar-weekday" ng-bind="weekday" ng-repeat="weekday in handler.getWeekdays()"></div>\
-                </div>\
-                <div class="smart-calendar-wrap">\
-                    <div ng-repeat="day in handler.calendarMonth.days"\
-                         ng-click="setActiveDay(day)"\
-                         ng-class="{\'smart-calendar-month-no-current-month\': !day.currentMonth, \'smart-calendar-month-today\': day.isToday}"\
-                         class="smart-calendar-month-day">\
-                            <span ng-bind="day.number"></span>\
+                <div class="smart-calendar-header">\
+                    <div class="smart-calendar-group-button">\
+                        <div ng-click="setPrev()" class="smart-calendar-button">\
+                            <div class="smart-calendar-icon-prev"></div>\
+                            <span ng-bind="getButtonPrevText()"></span>\
+                        </div>\
+                        <div ng-click="setNext()" class="smart-calendar-button">\
+                            <span ng-bind="getButtonNextText()"></span>\
+                            <div class="smart-calendar-icon-next"></div>\
+                        </div>\
                     </div>\
+                    <span ng-bind="getHeaderText()"></span>\
+                    <div class="smart-calendar-group-button smart-calendar-floating-right">\
+                        <div ng-class="{\'smart-calendar-active-button\': !isShowDayWrap}" ng-click="isShowDayWrap = false" ng-bind="handler.getLocalization().words.month" class="smart-calendar-button"></div>\
+                        <div ng-class="{\'smart-calendar-active-button\': isShowDayWrap}" ng-click="isShowDayWrap = true" ng-bind="handler.getLocalization().words.day" class="smart-calendar-button"></div>\
+                    </div>\
+                </div>\
+                <div ng-hide="isShowDayWrap">\
+                    <div class="smart-calendar-weekdays">\
+                        <div class="smart-calendar-weekday" ng-bind="weekday" ng-repeat="weekday in handler.getLocalization().days"></div>\
+                    </div>\
+                    <div class="smart-calendar-month-wrap">\
+                        <div ng-repeat="day in handler.calendarMonth.days"\
+                             ng-click="setActiveDay(day.date)"\
+                             ng-class="{\'smart-calendar-month-no-current-month\': !day.currentMonth, \'smart-calendar-month-today\': day.isToday}"\
+                             class="smart-calendar-month-day">\
+                                <span ng-bind="day.number"></span>\
+                        </div>\
+                    </div>\
+                </div>\
+                <div ng-show="isShowDayWrap" class="smart-calendar-day-wrap">\
+                    <ul>\
+                        <li>\
+                            <span class="smart-calendar-event-time"></span>\
+                            <span class="smart-calendar-event-name"></span>\
+                        </li>\
+                    </ul>\
                 </div>\
             </div>\
             ',
             controller: function ($scope) {
+                $scope.isShowDayWrap = false;
 
+                $scope.getButtonPrevText = function () {
+                    var activeDate = $scope.handler.getActiveDate();
+                    var prevDate;
+                    if ($scope.isShowDayWrap) {
+                        prevDate = $scope.handler.createDate(activeDate.getFullYear(), activeDate.getMonth(), activeDate.getDate() - 1);
+                        return prevDate.getDate() + ' ' + $scope.handler.getMonthShortName(prevDate);
+                    } else {
+                        prevDate = $scope.handler.createDate(activeDate.getFullYear(), activeDate.getMonth() - 1);
+                        return $scope.handler.getMonthName(prevDate);
+                    }
+
+                };
+
+                $scope.getButtonNextText = function () {
+                    var activeDate = $scope.handler.getActiveDate();
+                    var nextDate;
+                    if ($scope.isShowDayWrap) {
+                        nextDate = $scope.handler.createDate(activeDate.getFullYear(), activeDate.getMonth(), activeDate.getDate() + 1);
+                        return nextDate.getDate() + ' ' + $scope.handler.getMonthShortName(nextDate);
+                    } else {
+                        nextDate = $scope.handler.createDate(activeDate.getFullYear(), activeDate.getMonth() + 1);
+                        return $scope.handler.getMonthName(nextDate);
+                    }
+                };
+
+                $scope.getHeaderText = function () {
+                    var activeDate = $scope.handler.getActiveDate();
+                    if ($scope.isShowDayWrap) {
+                        return $scope.handler.getWeekdayName(activeDate) +
+                            ', ' + activeDate.getDate() +
+                            ' ' + $scope.handler.getMonthShortName(activeDate) +
+                            ' ' + activeDate.getFullYear();
+                    } else {
+                        return $scope.handler.getMonthName(activeDate) + ' ' + activeDate.getFullYear();
+                    }
+                };
+
+                $scope.setPrev = function () {
+                    var activeDate = $scope.handler.getActiveDate();
+                    if ($scope.isShowDayWrap) {
+                        activeDate.setDate(activeDate.getDate() - 1)
+                    } else {
+                        activeDate.setMonth(activeDate.getMonth() - 1);
+                    }
+                    $scope.handler.setActiveDate(activeDate);
+                };
+
+                $scope.setNext = function () {
+                    var activeDate = $scope.handler.getActiveDate();
+                    if ($scope.isShowDayWrap) {
+                        activeDate.setDate(activeDate.getDate() + 1)
+                    } else {
+                        activeDate.setMonth(activeDate.getMonth() + 1);
+                    }
+                    $scope.handler.setActiveDate(activeDate);
+                };
+
+                $scope.setActiveDay = function (date) {
+                    $scope.handler.setActiveDate(date);
+                    $scope.isShowDayWrap = true;
+                };
             }
         }
     });
