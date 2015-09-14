@@ -1,5 +1,5 @@
 angular.module('smartCalendar', [])
-    .factory('smartCalendarHandler', function () {
+    .factory('smartCalendarHandler', function ($timeout) {
         function SmartCalendarHandler(options) {
             var config = angular.merge({
                 localization: {
@@ -117,9 +117,41 @@ angular.module('smartCalendar', [])
                 }
             };
 
+            var events = [];
+            this.loadEvents = function(date) {
+                events = [];
+                $timeout(function () {
+                    return [
+                        {
+                            date: self.createDate(2015, 8, 1),
+                            name: 'Дверь мне запили'
+                        },
+                        {
+                            date: self.createDate(2015, 8, 3),
+                            name: 'Дверь мне запили'
+                        },
+                        {
+                            date: self.createDate(2015, 8, 3),
+                            name: 'Дверь мне запили'
+                        },
+                        {
+                            date: self.createDate(2015, 8, 11),
+                            name: 'Дверь мне запили'
+                        },
+                        {
+                            date: self.createDate(2015, 8, 22),
+                            name: 'Дверь мне запили'
+                        }
+                    ]
+                }, 100).then(function(data) {
+                    events = data;
+                });
+            };
+
             this.setActiveDate = function (date) {
                 activeDate = date;
                 this.calendarMonth.calc(date.getFullYear(), date.getMonth())
+                this.loadEvents(date);
             };
 
             this.setActiveDate(this.createDate());
@@ -143,6 +175,18 @@ angular.module('smartCalendar', [])
 
             this.getLocalization = function () {
                 return config.localization
+            };
+
+            this.checkEvents = function (date) {
+                var dateEvents = [];
+                angular.forEach(events, function(e) {
+                    if ((e.date.getFullYear() == date.getFullYear()) && (e.date.getMonth() == date.getMonth()) && (e.date.getDate() == date.getDate())) {
+                        dateEvents.push(e);
+                    }
+                });
+
+                return dateEvents;
+                //return date.getDate() == 17 || date.getDate() ==  11 || date.getDate() ==  1 || date.getDate() ==  31;
             }
         }
 
@@ -182,19 +226,23 @@ angular.module('smartCalendar', [])
                     <div class="smart-calendar-month-wrap">\
                         <div ng-repeat="day in handler.calendarMonth.days"\
                              ng-click="setActiveDay(day.date)"\
-                             ng-class="{\'smart-calendar-month-no-current-month\': !day.currentMonth, \'smart-calendar-month-today\': day.isToday}"\
+                             ng-class="{\'smart-calendar-month-no-current-month\': !day.currentMonth, \'smart-calendar-month-today\': day.isToday, \'smart-calendar-month-is-event\': handler.checkEvents(day.date).length}"\
                              class="smart-calendar-month-day">\
-                                <span ng-bind="day.number"></span>\
+                                <span class="smart-calendar-month-day-number" ng-bind="day.number"></span>\
+                                <div ng-if="handler.checkEvents(day.date).length" class="smart-calendar-month-day-event">\
+                                    <div class="smart-calendar-icon-bell"></div> \
+                                    <span ng-bind="handler.checkEvents(day.date).length"></span>\
+                                </div>\
                         </div>\
                     </div>\
                 </div>\
                 <div ng-show="isShowDayWrap" class="smart-calendar-day-wrap">\
-                    <ul>\
-                        <li>\
+                    <ol>\
+                        <li ng-repeat="event in handler.checkEvents(handler.getActiveDate())">\
                             <span class="smart-calendar-event-time"></span>\
-                            <span class="smart-calendar-event-name"></span>\
+                            <span ng-bind="event.name" class="smart-calendar-event-name"></span>\
                         </li>\
-                    </ul>\
+                    </ol>\
                 </div>\
             </div>\
             ',

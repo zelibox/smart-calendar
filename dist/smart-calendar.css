@@ -60,6 +60,7 @@
     border: 1px solid #eee;
     border-width: 1px 0px 0px 1px;
     padding: 5px;
+    position: relative;
     -webkit-transition: all 0.2s ease;
     -moz-transition: all 0.2s ease;
     -o-transition: all 0.2s ease;
@@ -88,21 +89,13 @@
     color: #aaa;
 }
 
-.smart-calendar-month-day.smart-calendar-month-today span{
-    background-color: #eee;
-    width: 30px;
-    height: 30px;
-    line-height: 30px;
-    text-align: center;
-    font-size: 19px;
-    display: inline-block;
-    color: #333;
-    font-weight: bold;
-    border-radius: 3px;
-}
-
 .smart-calendar-month-day:hover {
     box-shadow: 0px 0px 0px 5px #eee;
+    z-index: 9999;
+}
+
+.smart-calendar-month-is-event {
+    background: #FFF0F0;
 }
 
 .smart-calendar-button {
@@ -195,4 +188,26 @@
 
 .smart-calendar-icon-bell {
     background-image: url('data:image/png;base64,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');
+}
+
+.smart-calendar-month-day-event {
+    display: inline-block;
+    position: absolute;
+    top: 100%;
+    height: 25px;
+    margin-top: -25px;
+    left: 0;
+    width: 100%;
+    text-align: right;
+    padding-right: 6px;
+    font-weight: bold;
+}
+
+.smart-calendar-month-day.smart-calendar-month-today .smart-calendar-month-day-number{
+    font-size: 16px;
+    font-weight: bold;
+    background-color: #eee;
+    padding: 0 2px;
+    border-radius: 3px;
+    box-shadow: inset 0px -1px 0px rgba(0, 0, 0, 0.15);
 }
