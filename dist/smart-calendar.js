@@ -243,6 +243,7 @@ angular.module('smartCalendar', [])
                     if ($scope.isShowDayWrap) {
                         activeDate.setDate(activeDate.getDate() - 1)
                     } else {
+                        activeDate.setDate(1);
                         activeDate.setMonth(activeDate.getMonth() - 1);
                     }
                     $scope.handler.setActiveDate(activeDate);
@@ -253,6 +254,7 @@ angular.module('smartCalendar', [])
                     if ($scope.isShowDayWrap) {
                         activeDate.setDate(activeDate.getDate() + 1)
                     } else {
+                        activeDate.setDate(1);
                         activeDate.setMonth(activeDate.getMonth() + 1);
                     }
                     $scope.handler.setActiveDate(activeDate);
